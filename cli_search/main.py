@@ -2,9 +2,11 @@
 
 import argparse
 import logging
+import os
 import sys
 from typing import Any, Dict, List
 
+import openai
 import requests
 from bs4 import BeautifulSoup
 
@@ -15,6 +17,37 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(sys.stderr)],
 )
 logger = logging.getLogger(__name__)
+
+
+def generate_search_terms(question: str) -> str:
+    """Generate search terms based on the question using OpenAI."""
+    logger.info(f"Generating search terms for: {question}")
+
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("OPENAI_API_KEY not found in environment variables. Using original question as search terms.")
+        return question
+
+    try:
+        client = openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a search assistant. Generate a concise search query based on the user's question.",
+                },
+                {"role": "user", "content": f"Generate a search query for: {question}"},
+            ],
+            max_tokens=100,
+            temperature=0.3,
+        )
+        search_terms = response.choices[0].message.content.strip()
+        logger.info(f"Generated search terms: {search_terms}")
+        return search_terms
+    except Exception as e:
+        logger.error(f"Error generating search terms: {str(e)}")
+        return question
 
 
 def search_web(query: str) -> List[Dict[str, str]]:
@@ -58,24 +91,55 @@ def search_web(query: str) -> List[Dict[str, str]]:
 
 
 def generate_answer(question: str, search_results: List[Dict[str, str]]) -> str:
-    """Generate an answer based on the search results."""
+    """Generate an answer based on the search results using OpenAI."""
     logger.info(f"Generating answer for: {question}")
 
     if not search_results:
         return "I couldn't find any relevant information to answer your question."
 
-    # Simple answer generation
-    answer = f"Based on my search for '{question}', here's what I found:\n\n"
+    api_key = os.environ.get("OPENAI_API_KEY")
+    if not api_key:
+        logger.warning("OPENAI_API_KEY not found in environment variables. Using simple answer template.")
+        # Simple answer generation
+        answer = f"Based on my search for '{question}', here's what I found:\n\n"
 
-    for i, result in enumerate(search_results, 1):
-        answer += f"{i}. {result['title']}\n"
-        answer += f"   {result['snippet']}\n"
-        if result["url"]:
-            answer += f"   Source: {result['url']}\n"
-        answer += "\n"
+        for i, result in enumerate(search_results, 1):
+            answer += f"{i}. {result['title']}\n"
+            answer += f"   {result['snippet']}\n"
+            if result["url"]:
+                answer += f"   Source: {result['url']}\n"
+            answer += "\n"
 
-    answer += "This information should help answer your question."
-    return answer
+        answer += "This information should help answer your question."
+        return answer
+
+    try:
+        # Prepare context from search results
+        context = "Search results:\n\n"
+        for i, result in enumerate(search_results, 1):
+            context += f"{i}. Title: {result['title']}\n"
+            context += f"   Content: {result['snippet']}\n"
+            if result["url"]:
+                context += f"   Source: {result['url']}\n"
+            context += "\n"
+
+        client = openai.OpenAI(api_key=api_key)
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant. Use the provided search results to answer the user's question. Only use the information in the search results.",
+                },
+                {"role": "user", "content": f"Question: {question}\n\n{context}"},
+            ],
+            max_tokens=500,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"Error generating answer: {str(e)}")
+        return f"I encountered an error while generating your answer: {str(e)}"
 
 
 def main() -> None:
@@ -86,7 +150,13 @@ def main() -> None:
     args = parser.parse_args()
     question = " ".join(args.question)
 
-    search_results = search_web(question)
+    # Generate search terms using OpenAI
+    search_terms = generate_search_terms(question)
+
+    # Perform web search using generated search terms
+    search_results = search_web(search_terms)
+
+    # Generate answer based on search results using OpenAI
     answer = generate_answer(question, search_results)
 
     print(answer)
