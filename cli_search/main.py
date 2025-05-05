@@ -50,6 +50,34 @@ def generate_search_terms(question: str) -> str:
         return question
 
 
+def fetch_content_from_url(url: str) -> str:
+    """Fetch content from a URL."""
+    try:
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Remove script, style, and other non-content elements
+        for tag in soup(["script", "style", "meta", "link", "noscript"]):
+            tag.decompose()
+
+        # Extract text from the remaining content
+        text = soup.get_text(separator=" ", strip=True)
+
+        # Clean up whitespace
+        text = " ".join(text.split())
+
+        return text[:5000]  # Limit content length
+    except Exception as e:
+        logger.error(f"Error fetching content from {url}: {str(e)}")
+        return ""
+
+
 def search_web(query: str) -> List[Dict[str, str]]:
     """Perform a web search and return relevant results."""
     logger.info(f"Searching for: {query}")
@@ -107,8 +135,18 @@ def search_web(query: str) -> List[Dict[str, str]]:
                 logger.debug(f"Found result: {snippet}")
                 logger.debug(f"Found result: {url}")
 
-                # Limit to first 5 results
-                if len(results) >= 5:
+                # Try to fetch more content if URL is available
+                if url and url.startswith(("http://", "https://")):
+                    try:
+                        content = fetch_content_from_url(url)
+                        if content:
+                            result_data["content"] = content
+                            logger.debug(f"Fetched additional content from {url}")
+                    except Exception as e:
+                        logger.warning(f"Failed to fetch content from {url}: {e}")
+
+                # Limit to first 3 results to avoid overwhelming
+                if len(results) >= 3:
                     break
 
         # If parsing didn't work, fallback to a simpler approach with dummy data for testing
@@ -164,14 +202,14 @@ def generate_answer(question: str, search_results: List[Dict[str, str]]) -> str:
         context = "Search results:\n\n"
         for i, result in enumerate(search_results, 1):
             context += f"{i}. Title: {result['title']}\n"
-            context += f"   Content: {result['snippet']}\n"
+            context += f"   Content: {result.get('content', result['snippet'])}\n"
             if result["url"]:
                 context += f"   Source: {result['url']}\n"
             context += "\n"
 
         client = openai.OpenAI(api_key=api_key)
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo-16k",  # Using a larger context model to handle more content
             messages=[
                 {
                     "role": "system",

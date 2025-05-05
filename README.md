@@ -28,10 +28,10 @@ answer "What is the capital of France?"
 The bot will:
 
 1. Use OpenAI to generate optimized search terms based on your question
-2. Search the web for information using DuckDuckGo
-3. Use OpenAI to generate a comprehensive answer based on the search results
+2. Search the web using DuckDuckGo and fetch content from top results
+3. Use OpenAI to generate a comprehensive answer based on the retrieved information
 
-If the OPENAI_API_KEY environment variable is not set, the bot will fall back to using the original question as search terms and provide a simple template-based response.
+If the OPENAI_API_KEY environment variable is not set, the bot will fall back to a simple template-based response.
 
 ### Controlling Log Output
 
@@ -52,13 +52,21 @@ Available log levels in order of verbosity:
 - `ERROR`: Show only errors
 - `CRITICAL`: Show only critical errors
 
-## Notes
+## How It Works
 
-This implementation uses a simple web scraper approach. For a production-ready application, consider:
+The CLI search bot uses:
 
-1. Using an official search API (Google, Bing, DuckDuckGo)
-2. Implementing rate limiting and caching
-3. Adding more robust error handling
+- **OpenAI**: For generating optimal search terms and comprehensive answers
+- **DuckDuckGo**: For finding relevant web pages
+- **BeautifulSoup**: For parsing web content
+- **Direct Content Fetching**: For retrieving full article text from top search results
+
+This approach provides several benefits:
+
+- Enhanced search queries through AI
+- Rich context for answer generation
+- Comprehensive answers synthesized from multiple sources
+- Fallback mechanisms for reliability
 
 ## License
 
