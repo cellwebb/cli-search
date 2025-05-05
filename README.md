@@ -33,6 +33,25 @@ The bot will:
 
 If the OPENAI_API_KEY environment variable is not set, the bot will fall back to using the original question as search terms and provide a simple template-based response.
 
+### Controlling Log Output
+
+You can control the verbosity of the logs using the `--log-level` argument:
+
+```bash
+answer --log-level DEBUG "What is the capital of France?"  # Most verbose
+answer --log-level INFO "What is the capital of France?"   # Default
+answer --log-level WARNING "What is the capital of France?" # Less verbose
+answer --log-level ERROR "What is the capital of France?"   # Errors only
+```
+
+Available log levels in order of verbosity:
+
+- `DEBUG`: Show all details, including search results and API responses
+- `INFO`: Show general progress information (default)
+- `WARNING`: Show only warnings and issues
+- `ERROR`: Show only errors
+- `CRITICAL`: Show only critical errors
+
 ## Notes
 
 This implementation uses a simple web scraper approach. For a production-ready application, consider:
