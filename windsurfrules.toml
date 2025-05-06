@@ -1,0 +1,25 @@
+[python]
+target_version = "3.13"
+max_line_length = 120
+use_type_hints = true
+
+[style]
+omit_unnecessary_comments = true
+favor_readability = true
+prefer_concise_code = true
+
+[tools]
+formatter = "black"
+import_sorter = "isort"
+linter = "flake8"
+
+[dependencies]
+manager = "uv"
+config_file = "pyproject.toml"
+
+[testing]
+framework = "pytest"
+keep_complexity_low = true
+
+[docs]
+single_line_docstrings = true
