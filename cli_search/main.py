@@ -1,10 +1,10 @@
 """CLI search bot that processes questions and provides answers using LlamaIndex."""
 
-import argparse
 import logging
 import os
 import sys
 
+import click
 from llama_index.core import Settings
 from llama_index.core.indices.vector_store import VectorStoreIndex
 from llama_index.core.node_parser import SentenceSplitter
@@ -69,28 +69,25 @@ def search_and_answer(question: str) -> str:
         return f"I encountered an error while processing your question: {str(e)}"
 
 
-def main() -> None:
-    """Process command line arguments and execute the search bot."""
-    parser = argparse.ArgumentParser(description="CLI Search Bot using LlamaIndex")
-    parser.add_argument("question", nargs="+", help="The question to answer")
-    parser.add_argument(
-        "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default=DEFAULT_LOG_LEVEL,
-        help=f"Set the logging level (default: {DEFAULT_LOG_LEVEL})",
-    )
-
-    args = parser.parse_args()
-    question = " ".join(args.question)
-
+@click.command()
+@click.argument("question", nargs=-1, required=True)
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False),
+    default=DEFAULT_LOG_LEVEL,
+    help=f"Set the logging level (default: {DEFAULT_LOG_LEVEL})",
+)
+def main(question: tuple[str, ...], log_level: str) -> None:
+    """CLI Search Bot using LlamaIndex. Ask a question to get an answer from web search."""
     # Set the logging level
-    log_level = getattr(logging, args.log_level)
-    logger.setLevel(log_level)
-    logging.getLogger().setLevel(log_level)
+    log_level_value = getattr(logging, log_level.upper())
+    logger.setLevel(log_level_value)
+    logging.getLogger().setLevel(log_level_value)
 
     # Process the question and print the answer
-    answer = search_and_answer(question)
-    print(answer)
+    full_question = " ".join(question)
+    answer = search_and_answer(full_question)
+    click.echo(answer)
 
 
 if __name__ == "__main__":
