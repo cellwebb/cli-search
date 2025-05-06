@@ -10,9 +10,11 @@ import openai
 import requests
 from bs4 import BeautifulSoup
 
+DEFAULT_LOG_LEVEL = "WARNING"
+
 # Configure default logging - will be overridden by command line settings
 logging.basicConfig(
-    level=logging.INFO,
+    level=DEFAULT_LOG_LEVEL,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[logging.StreamHandler(sys.stderr)],
 )
@@ -233,8 +235,8 @@ def main() -> None:
     parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-        default="INFO",
-        help="Set the logging level (default: INFO)",
+        default=DEFAULT_LOG_LEVEL,
+        help=f"Set the logging level (default: {DEFAULT_LOG_LEVEL})",
     )
 
     args = parser.parse_args()
