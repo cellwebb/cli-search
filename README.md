@@ -1,6 +1,6 @@
 # CLI Search Bot
 
-A simple command-line search bot that answers questions based on web search results, using OpenAI to enhance search terms and generate responses.
+A concise command-line search bot that answers questions based on web search results, using LlamaIndex and OpenAI to create intelligent responses with proper citations.
 
 ## Installation
 
@@ -27,28 +27,30 @@ answer "What is the capital of France?"
 
 The bot will:
 
-1. Use OpenAI to generate optimized search terms based on your question
-2. Search the web using DuckDuckGo and fetch content from top results
-3. Use OpenAI to generate a comprehensive answer based on the retrieved information
+1. Search the web using DuckDuckGo for relevant pages
+2. Process and extract text content from the top results
+3. Index the content using LlamaIndex vector storage
+4. Generate a comprehensive answer with proper citations using OpenAI's GPT-4o
+5. Display deduplicated source links
 
-If the OPENAI_API_KEY environment variable is not set, the bot will fall back to a simple template-based response.
+If the OPENAI_API_KEY environment variable is not set, the bot will return an error message.
 
 ### Controlling Log Output
 
-You can control the verbosity of the logs using the `--log-level` argument:
+You can control the verbosity of the logs using the `--log-level` option:
 
 ```bash
 answer --log-level DEBUG "What is the capital of France?"  # Most verbose
-answer --log-level INFO "What is the capital of France?"   # Default
-answer --log-level WARNING "What is the capital of France?" # Less verbose
+answer --log-level INFO "What is the capital of France?"   # Show progress information
+answer --log-level WARNING "What is the capital of France?" # Less verbose (default)
 answer --log-level ERROR "What is the capital of France?"   # Errors only
 ```
 
 Available log levels in order of verbosity:
 
 - `DEBUG`: Show all details, including search results and API responses
-- `INFO`: Show general progress information (default)
-- `WARNING`: Show only warnings and issues
+- `INFO`: Show general progress information
+- `WARNING`: Show only warnings and issues (default)
 - `ERROR`: Show only errors
 - `CRITICAL`: Show only critical errors
 
@@ -56,17 +58,18 @@ Available log levels in order of verbosity:
 
 The CLI search bot uses:
 
-- **OpenAI**: For generating optimal search terms and comprehensive answers
+- **LlamaIndex**: For document processing, indexing and retrieval
+- **OpenAI**: For generating comprehensive answers via GPT-4o
 - **DuckDuckGo**: For finding relevant web pages
 - **BeautifulSoup**: For parsing web content
-- **Direct Content Fetching**: For retrieving full article text from top search results
+- **Click**: For a modern command-line interface
 
-This approach provides several benefits:
+This implementation is designed to be concise and efficient, with features like:
 
-- Enhanced search queries through AI
-- Rich context for answer generation
-- Comprehensive answers synthesized from multiple sources
-- Fallback mechanisms for reliability
+- SSL verification handling to work with a wide range of websites
+- Source deduplication to avoid repetition in citations
+- Error handling to gracefully manage web connectivity issues
+- HTML content processing to extract meaningful text
 
 ## License
 
